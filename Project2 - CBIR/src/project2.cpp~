@@ -1,0 +1,117 @@
+/*
+	Bruce A. Maxwell
+
+	Simple example showing how to get a listing of all files in a directory.  
+
+	Code modeled on the sample code in the man pages for directory.
+
+	man directory
+
+*/
+#include <cstdio>
+#include <cstdlib>
+#include <dirent.h>
+#include <cstring>
+#include <string>
+#include "opencv2/opencv.hpp"
+using namespace cv;
+
+int sad(Mat srcImg, Mat testImg){
+	//initialize the matrices
+	Mat A = srcImg;
+	Mat B = testImg;
+
+	printf("hey ;)\n\n\n\n\n");
+	// store the values of ther rows and cols
+	int centerAx = A.rows/2;
+	int centerAy = A.cols/2;
+	int centerBx = B.rows/2;
+	int centerBy = B.cols/2;
+	
+	//get 5x5 subimages of each image at the centers
+
+	printf("before submatrices\n\n\n\n\n");
+	Mat subA(A, Rect(centerAx -2, centerAy -2, 5, 5));
+	Mat subB(B, Rect(centerBx -2, centerBy -2, 5, 5));
+	printf("2\n\n\n\n\n\n");
+	Mat diff = subA - subB;
+	Mat diffSquare = diff.mul(diff);
+
+	//calculate the ssd
+	print(diffSquare);
+	Scalar ssd = cv::sum(diffSquare);
+	
+	int sum = 0;
+	for (int i = 0; i < 4; i++){
+		sum += ssd[i];
+	}
+	sum = sum/4;
+
+	return sum;
+}
+
+
+int main(int argc, char *argv[]) {
+	char dirname[256];
+	DIR *dirp;
+	struct dirent *dp;
+
+	// by default, look at the current directory
+	strcpy(dirname, ".");
+
+	// if the user provided a directory path, use it
+	if(argc > 1) {
+		strcpy(dirname, argv[1]);
+	}
+	printf("Accessing directory %s\n\n", dirname);
+
+	// open the directory
+	dirp = opendir( dirname );
+	if( dirp == NULL ) {
+		printf("Cannot open directory %s\n", dirname);
+		exit(-1);
+	}
+
+	char imgFilename[256];
+	char dirFilename[256];
+	Mat img;
+	Mat dirImg;
+
+	strcpy(imgFilename, argv[2]);
+	img = imread(imgFilename);
+
+	// loop over the contents of the directory, looking for images
+	while( (dp = readdir(dirp)) != NULL ) {
+		// printf(dp->d_name);
+		if( strstr(dp->d_name, ".JPG") ||
+			strstr(dp->d_name, ".jpg") ||
+				strstr(dp->d_name, ".PNG") ||
+				strstr(dp->d_name, ".png") ||
+				strstr(dp->d_name, ".PPM") ||
+				strstr(dp->d_name, ".ppm") ||
+				strstr(dp->d_name, ".TIF") ||
+				strstr(dp->d_name, ".tif") ) {
+			
+			printf("hello?\n\n\n");
+			printf("image file: %s\n", dp->d_name);
+			printf("after image file print");
+			
+			strcpy(dirFilename, dp->d_name);
+			printf("post strpy");
+			
+			dirImg = imread(dirFilename);
+			printf("pressd");
+			int ssd = sad(img, dirImg);
+			printf("postssd");
+		}
+
+	}
+	
+	// close the directory
+	closedir(dirp);
+		
+	printf("\nTerminating\n");
+
+	return(0);
+}
+
